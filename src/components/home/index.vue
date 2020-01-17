@@ -4,7 +4,7 @@
     
     
     <div id="camera" style="position: relative" class="margin">
-      <video :onloadedmetadata="onPlay()" id="inputVideo" ref="webcam" autoplay muted playsinline></video>
+      <video :onloadedmetadata="detectAndReco()" id="inputVideo" ref="webcam" autoplay muted playsinline></video>
       <canvas id="overlay" ref="overlay" />
     </div>
 
@@ -43,18 +43,28 @@ export default {
       lastPerson: null,
       lastMatch: null,
       faceMatcher: null,
+
+      allMatcher: [],
+      targetFaces: ['./assets/targets/YiPing_Cao.png'],
+      targetFacesBase64:[],
+
       SSD_MOBILENETV1: 'ssd_mobilenetv1',
       TINY_FACE_DETECTOR: 'tiny_face_detector',
       selectedFaceDetector: 'tiny_face_detector'
     }
   },
   created(){
+    
+    
     this.init()
+    
   },
   methods:{
     async init() {
       //await faceapi.loadTinyFaceDetectorModel("/models");
-      await this.run();
+      await this.run()
+      await this.initAllTargetBase64()
+      await this.initAllMatcher()
     },
     async run() {
       // load face detection model
@@ -69,6 +79,8 @@ export default {
       const stream = await navigator.mediaDevices.getUserMedia({ video: {} })
       const videoEl = this.$refs.webcam
 
+      const matcher = []
+
       // Storage video element reference to this.webcamRef
       this.webcamRef = videoEl
       videoEl.srcObject = stream
@@ -76,16 +88,48 @@ export default {
       this.avgTIM = this.$refs.avgTIM
       this.avgFPS = this.$refs.avgFPS
 
+      
+      //this.initAllMatcher()
+      
       //this.faceMatcher = new faceapi.FaceMatcher(fullFaceDescriptions)
       
     },
 
-    async onPlay() {
+    async initAllMatcher () {
+      var that = this
+      const matchers = []
+
+      this.targetFaces.forEach(async (tf, index) => {
+
+        const imgEle = document.createElement('img')
+        imgEle.src = this.targetFacesBase64[0]
+
+        const des = await faceapi
+        .detectAllFaces(imgEle, that.getFaceDetectorOptions())
+        .withFaceLandmarks()
+        .withFaceDescriptors()
+
+        const matcher = new faceapi.FaceMatcher(des)
+
+        matchers.push(matcher)
+        
+      })
+
+      this.allMatcher = matchers
+    },
+
+    async initAllTargetBase64 () {
+      await this.imgToBase64(this.targetFaces[0]).then((res)=>{
+        this.targetFacesBase64.push(res)
+      })
+    },
+
+    async detectAndShot() {
       
       const videoEl = this.webcamRef
       
       if(!videoEl || videoEl.paused || videoEl.ended || !this.isFaceDetectionModelLoaded()){
-        return setTimeout(() => this.onPlay())
+        return setTimeout(() => this.detectAndShot())
       }
         
       const options = this.getFaceDetectorOptions()
@@ -107,19 +151,17 @@ export default {
         
         const dims = faceapi.matchDimensions(canvas, videoEl, true)
 
-
-
           if(this.lastPerson){
 
             const thisMatch = this.faceMatcher.findBestMatch(result.descriptor)
 
             if(this.lastMatch){
               if(thisMatch.label != this.lastMatch.label){
-
                 // DIFFERENT PERSON BEEN REC 
                 console.log('DIFFERENT')
-                this.lastPerson = result
                 this.faceMatcher = new faceapi.FaceMatcher(this.lastPerson)
+                this.lastPerson = result
+                console.log(thisMatch.label + ":" + this.lastMatch.label)
                 // Draw by capture canvas
                 this.capture(canvas)
               } else{
@@ -137,47 +179,75 @@ export default {
             // Draw by capture canvas
             this.capture(canvas)
           }
-          // Draw by faceapi
-          /*const resizedDetections = faceapi.resizeResults(result, dims)
-          faceapi.draw.drawDetections(resCanvas, resizedDetections)*/
-
-          
-        
 
         faceapi.draw.drawDetections(canvas, faceapi.resizeResults(result, dims))
         
       }
-      setTimeout(() => this.onPlay())
+      setTimeout(() => this.detectAndShot(), 500)
       
-      /*
-      // DETECT MULTIPLE
-      const results = await faceapi.detectAllFaces(videoEl, options)
+    },
 
-      updateTimeStats(Date.now() - ts)
+    // Reco by ref
+    async detectAndReco() {
+
+      var that = this
+      
+      const videoEl = this.webcamRef
+      
+      if(!videoEl || videoEl.paused || videoEl.ended || !this.isFaceDetectionModelLoaded()){
+        return setTimeout(() => this.detectAndReco())
+      }
+        
+      const options = this.getFaceDetectorOptions()
+
+      const ts = Date.now()
+      
+      // DETECT MULTIPLE
+      const results = await faceapi
+                      .detectAllFaces(videoEl, options)
+                      .withFaceLandmarks()
+                      .withFaceDescriptors()
+
+      this.updateTimeStats(Date.now() - ts)
 
       if (results.length > 0) {
 
-        const canvas = $('#overlay').get(0)
+        const canvas = this.$refs.overlay
+        const resCanvas = this.$refs.res
         
         const dims = faceapi.matchDimensions(canvas, videoEl, true)
-
-        if(!c){
-          sC_screenCapture(canvas)
-        }
-
+        // Reco is me
         results.forEach(resS => {
-          faceapi.draw.drawDetections(canvas, faceapi.resizeResults(resS, dims))
+          that.allMatcher.forEach(mat => {
+            const thisMatch = mat.findBestMatch(resS.descriptor).toString()
+            if(thisMatch){
+              const label = thisMatch.toString()
+              const options = { label }
+              const drawBox = new faceapi.draw.DrawBox(resS.detection.box, options)
+              drawBox.draw(canvas)
+            }
+          })
+          //faceapi.draw.drawDetections(canvas, faceapi.resizeResults(resS, dims))
         })
-        
+
+        //faceapi.draw.drawDetections(canvas, faceapi.resizeResults(results[0], dims))
       }
-      */
-
       
-    },
-
-    isSame (reference, target) {
+     setTimeout(() => this.detectAndReco(), 500)
 
     },
+
+    async imgToBase64(url){
+      const data = await this.axios.get(url, { responseType: 'arraybuffer' })
+      data.hh = data.headers
+      data.ii = btoa(
+          new Uint8Array(data.data)
+            .reduce((data, byte) => data + String.fromCharCode(byte), '')
+        )
+      const res = `data:${data.hh['content-type'].toLowerCase()};base64,${data.ii}`
+      return res
+    },
+
 
     // Performance detector
     updateTimeStats(timeInMs) {
