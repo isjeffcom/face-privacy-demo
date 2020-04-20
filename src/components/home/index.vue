@@ -4,7 +4,7 @@
     
     
     <div id="camera" style="position: relative" class="margin">
-      <video :onloadedmetadata="detectAndReco()" id="inputVideo" ref="webcam" autoplay muted playsinline></video>
+      <video :onloadedmetadata="detectAndShot()" id="inputVideo" ref="webcam" autoplay muted playsinline></video>
       <canvas id="overlay" ref="overlay" />
     </div>
 
@@ -45,7 +45,7 @@ export default {
       faceMatcher: null,
 
       allMatcher: [],
-      targetFaces: ['./assets/targets/YiPing_Cao.png'],
+      targetFaces: ['./assets/targets/Jianfeng_Wu.png'],
       targetFacesBase64:[],
 
       SSD_MOBILENETV1: 'ssd_mobilenetv1',
@@ -61,8 +61,10 @@ export default {
   },
   methods:{
     async init() {
-      //await faceapi.loadTinyFaceDetectorModel("/models");
+
       await this.run()
+
+      // initialize target
       await this.initAllTargetBase64()
       await this.initAllMatcher()
     },
@@ -151,34 +153,34 @@ export default {
         
         const dims = faceapi.matchDimensions(canvas, videoEl, true)
 
-          if(this.lastPerson){
+        if(this.lastPerson){
 
-            const thisMatch = this.faceMatcher.findBestMatch(result.descriptor)
+          const thisMatch = this.faceMatcher.findBestMatch(result.descriptor)
 
-            if(this.lastMatch){
-              if(thisMatch.label != this.lastMatch.label){
-                // DIFFERENT PERSON BEEN REC 
-                console.log('DIFFERENT')
-                this.faceMatcher = new faceapi.FaceMatcher(this.lastPerson)
-                this.lastPerson = result
-                console.log(thisMatch.label + ":" + this.lastMatch.label)
-                // Draw by capture canvas
-                this.capture(canvas)
-              } else{
-                // SAME PERSON AS THE LAST ONE
-                console.log('SAME')
-              }
-            } else {
-              this.lastMatch = thisMatch
+          if(this.lastMatch){
+            if(thisMatch.label != this.lastMatch.label){
+              // DIFFERENT PERSON BEEN REC 
+              console.log('DIFFERENT')
+              this.faceMatcher = new faceapi.FaceMatcher(this.lastPerson)
+              this.lastPerson = result
+              console.log(thisMatch.label + ":" + this.lastMatch.label)
+              // Draw by capture canvas
+              this.capture(canvas)
+            } else{
+              // SAME PERSON AS THE LAST ONE
+              console.log('SAME')
             }
           } else {
-            // FIRST TIME A PERSON BEEN REC FRONT OF THE CAM
-            console.log('FIRST')
-            this.lastPerson = result
-            this.faceMatcher = new faceapi.FaceMatcher(this.lastPerson)
-            // Draw by capture canvas
-            this.capture(canvas)
+            this.lastMatch = thisMatch
           }
+        } else {
+          // FIRST TIME A PERSON BEEN REC FRONT OF THE CAM
+          console.log('FIRST')
+          this.lastPerson = result
+          this.faceMatcher = new faceapi.FaceMatcher(this.lastPerson)
+          // Draw by capture canvas
+          this.capture(canvas)
+        }
 
         faceapi.draw.drawDetections(canvas, faceapi.resizeResults(result, dims))
         
