@@ -7,7 +7,7 @@ import axios from 'axios'
 import VueAxios from 'vue-axios'
  
 Vue.use(VueAxios, axios)
-
+import 'leaflet/dist/leaflet.css';
 
 Vue.config.productionTip = false
 
