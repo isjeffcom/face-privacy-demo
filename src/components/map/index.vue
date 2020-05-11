@@ -95,7 +95,7 @@ export default {
     },
     data(){
         return{
-            api: "./assets/data/london.json",
+            api: "./assets/data/uk.json",
             start: true,
             ready: false,
             intro: false,

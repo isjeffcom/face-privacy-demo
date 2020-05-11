@@ -27,18 +27,34 @@
                     <img :src="setIcon(item.emo).src" alt="area" :width="setIcon(item.emo).size"> 
                 </div>
 
-                <MglPopup>
-                    <div style="color:#000;">
+                <MglPopup :showed="false">
+                    <div style="color:#ffffff; background: rgba(0,0,0,1);">
                         <div style="font-size: 18px;font-weight: bold;">{{ item.name }}</div>
-                        <div style="font-size: 14px;">Emotion: {{ parseFloat((item.emo * 100).toFixed(2)) }}% </div>
+                        <div style="font-size: 14px;">Emotion: {{ parseFloat(item.emo.toFixed(2)) }}% </div>
+                        <div style="font-size: 10px;width:100%;">
+                            <li 
+                                v-for="(val, name) in item.detail" 
+                                :key="name"
+                                :style="'color:' + getColor(name) + ';'">
+                                    {{name}}: {{val}}
+
+                                    <div style="width: 200px; height: 2px; background:#fafafa; margin-top: 6px;">
+                                        <div :style="'height: 2px;width:' + parseFloat(val.toFixed(0)) + '%;background:' + getColor(name) + ';'"></div>
+                                    </div>
+                                </li>
+
+                                
+                        </div>
                         <div class="ref-imgs">
 
-                            <img 
-                            v-for="ig in igs" :src="'./assets/imgs/places/'+item.dict+'/'+ig+'.jpg'" 
+                            <!--img 
+                            v-for="ig in igs" :src="'https://playground.isjeff.com/efassets/'+item.dict+'/'+ig+'_img.jpg'" 
                             :key="ig"
                             width="30px"
                             height="30px"
-                            alt="">
+                            alt=""-->
+
+                            <button style="width:90%;padding-top: 10px;padding-bottom:10px; margin-top: 5px; margin-bottom: 5px;" v-on:click="refImgs(item.dict)">Ref Images</button>
 
                         </div>
 
@@ -92,7 +108,7 @@ export default {
   data() {
     return {
         ready: false,
-        igs: [0,1,2,3,4,5,6,7,8,9,10],
+        igs: [],
         accessToken: "pk.eyJ1IjoiaGVpbG8xNDMiLCJhIjoiY2s5MXU3OWg0MDE5MDNlbXJxc3I5bGllMSJ9.pH2B__COb1ub7QPXDJxzaA",
         mapStyle: "mapbox://styles/heilo143/ck9wxvkif0ujd1ipgxmuzf0he",
         geoJsonSrc: {},
@@ -114,7 +130,18 @@ export default {
         renderer: null,
         mixer: null,
         raycaster: null,
-        mouse: null
+        mouse: null,
+
+        // Color
+        colors: {
+            happy: "#29C078",
+            sad: "#8E59FF",
+            angry: "#FF7575",
+            neutral: "#D0E0FF",
+            fearful: "#C495FF",
+            disgusted: "#729F5D",
+            surprised: "#FF7AAA"
+        }
     }
   },
 
@@ -183,10 +210,6 @@ export default {
     },
     setIcon(emo){
 
-
-        // Emotion score
-        emo = emo * 100
-
         let u = ""
 
         if(emo > 35){
@@ -194,7 +217,7 @@ export default {
         }
 
         else if(emo > 30){
-            u = './assets/imgs/marker_ye.svg'
+            u = './assets/imgs/marker_gr.svg'
         }
 
         else if(emo > 27){
@@ -212,6 +235,18 @@ export default {
         return {size: 60, src: u}
     },
 
+    getColor(name){
+
+        let res = "#ffffff"
+        for (const key in this.colors) {
+            if(name == key){
+                res =  this.colors[key]
+            }
+        }
+
+        return res
+    },
+
     async inside(){
 
         this.focus = true
@@ -225,6 +260,12 @@ export default {
         })
 
         this.addModel()
+    },
+
+    refImgs(dist){
+
+        let routeData = this.$router.resolve({name: 'imgs', query: {dist: dist}});
+        window.open(routeData.href, '_blank');
     },
 
     async back(){

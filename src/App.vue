@@ -57,4 +57,9 @@ button:focus {outline:0;}
   background: #000;
 }
 
+.mapboxgl-popup-content{
+  background: rgba(0,0,0,1);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
 </style>
