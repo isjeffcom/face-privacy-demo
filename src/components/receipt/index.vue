@@ -3,7 +3,7 @@
         <div id="receipt-inner">
             <div class="receipt-title">
                 <div style="margin-bottom: 10px;">
-                    <img :src="cap" alt="captured image" width="250px;" v-if="cap" style="filter: grayscale(100%);">
+                    <img :src="cap" alt="captured image" width="250px;" v-if="cap" style="filter: grayscale(50%);">
                 </div>
                 
                 <div>
@@ -61,6 +61,7 @@ button{
     width: 160px;
     height: 50px;
     background: rgba(255,255,255,0);
+    padding-top: 2px;
     border-radius: 2px;
     border: 2px solid #fff;
     font-weight: bold;

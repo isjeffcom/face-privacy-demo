@@ -18,28 +18,11 @@
 
       <div id="score">
         
-        <vue-circle
-          ref="progress"
-          :progress="0"
-          :size="100"
-          line-cap="round"
-          :fill="fill"
-          empty-fill="rgba(0, 0, 0, .1)"
-          :animation-start-value="0.0"
-          :start-angle="0"
-          insert-mode="append"
-          :thickness="5"
-          :show-percent="true">
-          <p>Progress</p>
-        </vue-circle>
+        <cprogress 
+          :val="score" 
+          :emo="allEmo">
 
-        <hr style="margin-bottom: 20px; opacity: 0.5;">
-
-        <div id="score-happiness">
-          <div>Current Happiness</div>
-          <div style="font-size: 48px;margin-bottom: 20px;">{{ parseFloat((happyCurrent * 100).toFixed(2)) }}% </div>
-          <div style="font-size: 12px;opacity: 0.3;font-weight: normal;">You must keep happiness score upper than {{ happyLimit * 100}}</div>
-        </div>
+        </cprogress>
         
       </div>
 
@@ -68,36 +51,56 @@
 import * as faceapi from "face-api.js"
 import * as faceControl from '../../faceControls'
 
-import VueCircle from 'vue2-circle-progress'
+
 import ls from 'local-storage'
+
+import cprogress from '../widgets/progress'
 
 export default {
   name: 'home',
   components: {
-    VueCircle
-  },
-  props: {
-    
+    cprogress
   },
   data(){
     return {
       stream: null,
       isLoading: true,
       score: 0,
+
+      // Emotion Storager
       happyCurrent: 0,
+      allEmo: {
+        happy:0,
+        sad: 0,
+        angry: 0,
+        neutral: 0,
+        fearful: 0,
+        disgusted: 0,
+        surprised: 0
+      },
+      
+      // Flag
       happyLimit: 0.97,
-      scoreStep: 0.5,
+      scoreStep: 0.1,
+
+      // Camera
       webcamRef: null,
+
+      // UI Flag
       showCam: true,
       isCaptured: false,
+
       forwardTimes: [],
+
+      // UI Element
       avgTIM: null,
       avgFPS: null,
       faceMatcher: null,
+
+      // AI Models
       SSD_MOBILENETV1: 'ssd_mobilenetv1',
       TINY_FACE_DETECTOR: 'tiny_face_detector',
-      selectedFaceDetector: 'tiny_face_detector',
-      fill : { gradient: ["rgb(255,80,80)", "rgb(199,79,255)"] },
+      selectedFaceDetector: 'tiny_face_detector'
     }
   },
   created(){
@@ -105,8 +108,8 @@ export default {
     this.init()
 
     setTimeout(()=>{
-      this.happyLimit = 0.9
-    }, 60000)
+      this.happyLimit = 0.75
+    }, 200000)
   },
   methods:{
 
@@ -139,6 +142,8 @@ export default {
 
     // Main function for detect expression
     async detectExpression(){
+
+      //console.log(this.score)
 
       if(this.score >= 100){
         this.stopCam()
@@ -178,29 +183,32 @@ export default {
 
         const resizedResult = faceapi.resizeResults(result, dims)
 
-        
+        if(this.score > 50){
+          this.capture()
+        }
+        // Check current status and add to progress
+        this.allEmo.happy = result.expressions.happy
+        this.allEmo.angry = result.expressions.angry
+        this.allEmo.disgusted = result.expressions.disgusted
+        this.allEmo.fearful = result.expressions.fearful
+        this.allEmo.neutral = result.expressions.neutral
+        this.allEmo.sad = result.expressions.sad
+        this.allEmo.surprised = result.expressions.surprised
+
+
+        if(this.allEmo.happy > this.happyLimit){
+          this.score = this.score + this.scoreStep
+        }
 
         if (withBoxes) {
           faceapi.draw.drawDetections(canvas, resizedResult)
-          
-          if(this.score > 50){
-            this.capture()
-          }
-          // Check current status and add to progress
-          this.happyCurrent = result.expressions.happy
-
-          if(this.happyCurrent > this.happyLimit){
-            this.score = this.score + this.scoreStep
-            this.$refs.progress.updateProgress(this.score)
-          }
-          
         }
 
         faceapi.draw.drawFaceExpressions(canvas, resizedResult, 0.05)
 
       }
 
-      setTimeout(() => this.detectExpression())
+      setTimeout(() => this.detectExpression(), 300)
 
     },
 
@@ -338,18 +346,14 @@ a {
 }
 
 #face-cont{
-  width: 70%;
+  width: 80%;
 }
 
 #score{
-  width: 30%;
+  width: 20%;
   height: 200px;
   margin-top: 50px;
   text-align: center;
-}
-
-#score-happiness{
-  font-weight: bold;
 }
 
 @media only screen and (max-width: 800px) {

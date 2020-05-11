@@ -11,7 +11,7 @@ import map from './components/map'
 
 export default new VueRouter({
   routes: [
-      { path:'/', name:'emotion', redirect: '/emotion' },
+      { path:'/', name:'index', redirect: '/map' },
       { path: '/home', name: 'home', component: home },
       { path: '/receipt', name: 'receipt', component: receipt },
       { path: '/emotion', name: 'emotion', component: emotion },
