@@ -30,7 +30,7 @@
                 <MglPopup :showed="false">
                     <div style="color:#ffffff; background: rgba(0,0,0,1);">
                         <div style="font-size: 18px;font-weight: bold;">{{ item.name }}</div>
-                        <div style="font-size: 14px;">Emotion: {{ parseFloat(item.emo.toFixed(2)) }}% </div>
+                        <!--div style="font-size: 14px;">Emotion: {{ parseFloat(item.emo.toFixed(2)) }}% </div-->
                         <div style="font-size: 10px;width:100%;">
                             <li 
                                 v-for="(val, name) in item.detail" 
@@ -212,19 +212,19 @@ export default {
 
         let u = ""
 
-        if(emo > 35){
+        if(emo > 50){
             u = './assets/imgs/marker_ye.svg'
         }
 
-        else if(emo > 30){
+        else if(emo > 40){
             u = './assets/imgs/marker_gr.svg'
         }
 
-        else if(emo > 27){
+        else if(emo > 30){
             u = './assets/imgs/marker_or.svg'
         }
 
-        else if(emo > 25){
+        else if(emo > 20){
             u = './assets/imgs/marker_or.svg'
         }
 
