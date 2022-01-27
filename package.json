@@ -13,7 +13,7 @@
     "face-api.js": "^0.22.2",
     "local-storage": "^2.0.0",
     "mapbox-gl": "^1.10.0",
-    "three": "^0.116.1",
+    "three": "^0.137.0",
     "vue": "^2.6.10",
     "vue-axios": "^2.1.5",
     "vue-mapbox": "^0.4.1",
